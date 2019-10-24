@@ -125,6 +125,20 @@ optim_sgd = optim.SGD(model.parameters(), lr = 0.05)
 loss_class = nn.CrossEntropyLoss()
 summary_writer = SummaryWriter('logs', flush_secs=5)
 
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+    print ("Using CUDA...")
+else:
+    DEVICE = torch.device("cpu")
+    print ("Using CPU...")
+
+model = model.to(DEVICE)
+
+features['train'] = features['train'].to(DEVICE)
+features['test'] = features['test'].to(DEVICE)
+labels['train'] = labels['train'].to(DEVICE)
+labels['test'] = labels['test'].to(DEVICE)
+
 
 start = time.time()
 
