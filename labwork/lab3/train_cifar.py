@@ -372,4 +372,6 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
 
 
 if __name__ == "__main__":
+    start = time.time()
     main(parser.parse_args())
+    print ("Total time taken: {}".format(time.time() - start))
