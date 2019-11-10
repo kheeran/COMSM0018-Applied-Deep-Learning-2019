@@ -69,7 +69,7 @@ output.backward()
 # print (output.backward)
 
 def accuracy (probs: torch.FloatTensor, targets: torch.LongTensor) -> float:
-  trained_labels = torch.max (probs, 1)
+  trained_labels = torch.max(probs, 1)
   correct_labels = (targets == trained_labels.indices).sum()
   correct_labels_float = correct_labels.type(torch.FloatTensor)
   return torch.div (correct_labels_float, targets.size()[0])

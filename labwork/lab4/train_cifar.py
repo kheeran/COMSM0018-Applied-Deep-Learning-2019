@@ -69,6 +69,25 @@ parser.add_argument(
     default=0,
     type=float,
 )
+parser.add_argument(
+    "--data-aug-hflip",
+    action = 'store_true',
+)
+parser.add_argument(
+    "--data-aug-brightness",
+    default=0,
+    type=float,
+)
+parser.add_argument(
+    "--data-aug-rotation",
+    default=0,
+    type=float,
+)
+parser.add_argument(
+    "--dropout",
+    default=0,
+    type=float,
+)
 
 
 class ImageShape(NamedTuple):
@@ -84,16 +103,24 @@ else:
     DEVICE = torch.device("cpu")
     print ("Using CPU...")
 
-
 def main(args):
-    transform = transforms.ToTensor()
+    transforms_list = [torchvision.transforms.ToTensor()]
     args.dataset_root.mkdir(parents=True, exist_ok=True)
-    train_dataset = torchvision.datasets.CIFAR10(
-        args.dataset_root, train=True, download=True, transform=transform
-    )
+
+    transform = torchvision.transforms.Compose(transforms_list)
     test_dataset = torchvision.datasets.CIFAR10(
         args.dataset_root, train=False, download=False, transform=transform
     )
+
+    transforms_list.insert(0, torchvision.transforms.RandomHorizontalFlip()) if args.data_aug_hflip else None
+    transforms_list.insert(0, torchvision.transforms.ColorJitter(brightness=args.data_aug_brightness))
+    transforms_list.insert(0, torchvision.transforms.RandomRotation(degrees=args.data_aug_rotation))
+
+    transform = torchvision.transforms.Compose(transforms_list)
+    train_dataset = torchvision.datasets.CIFAR10(
+        args.dataset_root, train=True, download=True, transform=transform
+    )
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         shuffle=True,
@@ -186,6 +213,8 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear (1024, 10)
         self.initialise_layer(self.fc2)
 
+        self.dropout = nn.Dropout(p=args.dropout)
+
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         x = self.conv1(images)
         x = self.bnorm1(x)
@@ -201,11 +230,11 @@ class CNN(nn.Module):
         ##         (batch_size, 4096)
         x = torch.flatten(x, start_dim = 1)
         ## TASK 5-2: Pass x through the first fully connected layer
-        x = self.fc1(x)
+        x = self.fc1(self.dropout(x))
         x = self.bnormfc1(x)
         x = F.relu(x)
         ## TASK 6-2: Pass x through the last fully connected layer
-        x = self.fc2(x)
+        x = self.fc2(self.dropout(x))
         return x
 
     @staticmethod
@@ -385,7 +414,7 @@ def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
         from getting logged to the same TB log directory (which you can't easily
         untangle in TB).
     """
-    tb_log_dir_prefix = f'CNN_bn_bs={args.batch_size}_lr={args.learning_rate}_momentum={args.momentum}_run_'
+    tb_log_dir_prefix = (f'CNN_bn_dropout={args.dropout}_bs={args.batch_size}_lr={args.learning_rate}_momentum={args.momentum}_brightness={args.data_aug_brightness}_rotation={args.data_aug_rotation}' + ("_hflip" if args.data_aug_hflip else "") + '_run_')
     i = 0
     while i < 1000:
         tb_log_dir = args.log_dir / (tb_log_dir_prefix + str(i))
