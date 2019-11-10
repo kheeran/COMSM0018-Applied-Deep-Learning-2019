@@ -10,4 +10,4 @@ module purge
 # load in the module dependencies for this script
 module load "languages/anaconda3/2019.07-3.6.5-tflow-1.14"
 
-python train_cifar.py --batch-size 128 --learning-rate 1e-1 --momentum 0.9 --data-aug-hflip
+python train_cifar.py --batch-size 128 --learning-rate 1e-1 --momentum 0.9 --dropout 0.5

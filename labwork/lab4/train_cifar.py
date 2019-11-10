@@ -136,7 +136,7 @@ def main(args):
         pin_memory=True,
     )
 
-    model = CNN(height=32, width=32, channels=3, class_count=10)
+    model = CNN(height=32, width=32, channels=3, class_count=10, dropout=args.dropout)
 
     ## TASK 8: Redefine the criterion to be softmax cross entropy
     criterion = nn.CrossEntropyLoss()
@@ -165,7 +165,7 @@ def main(args):
 
 
 class CNN(nn.Module):
-    def __init__(self, height: int, width: int, channels: int, class_count: int):
+    def __init__(self, height: int, width: int, channels: int, class_count: int, dropout: float):
         super().__init__()
         self.input_shape = ImageShape(height=height, width=width, channels=channels)
         self.class_count = class_count
@@ -213,7 +213,7 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear (1024, 10)
         self.initialise_layer(self.fc2)
 
-        self.dropout = nn.Dropout(p=args.dropout)
+        self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         x = self.conv1(images)
@@ -333,7 +333,8 @@ class Trainer:
                 f"batch accuracy: {accuracy * 100:2.2f}, "
                 f"data load time: "
                 f"{data_load_time:.5f}, "
-                f"step time: {step_time:.5f}"
+                f"step time: {step_time:.5f},"
+
         )
 
     def log_metrics(self, epoch, accuracy, loss, data_load_time, step_time):
@@ -375,6 +376,10 @@ class Trainer:
         accuracy = compute_accuracy(
             np.array(results["labels"]), np.array(results["preds"])
         )
+        class_accuracy = compute_class_accuracy(
+            np.array(results["labels"]), np.array(results["preds"])
+        )
+
         average_loss = total_loss / len(self.val_loader)
 
         self.summary_writer.add_scalars(
@@ -387,7 +392,7 @@ class Trainer:
                 {"test": average_loss},
                 self.step
         )
-        print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}")
+        print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}, class_accuracy: {class_accuracy * 100:2.2f}")
 
 
 def compute_accuracy(
@@ -400,6 +405,15 @@ def compute_accuracy(
     """
     assert len(labels) == len(preds)
     return float((labels == preds).sum()) / len(labels)
+
+def compute_class_accuracy(labels: Union[torch.Tensor, np.ndarray], preds: Union[torch.Tensor, np.ndarray], class_count: int = 10) -> float:
+    assert len(labels) == len(preds)
+    class_accuracy = []
+    for class in range (0,class_count):
+        class_accuracy.append(float((labels == preds == class).sum()) / len(labels == class))
+    return class_accuracy
+
+
 
 
 def get_summary_writer_log_dir(args: argparse.Namespace) -> str:
