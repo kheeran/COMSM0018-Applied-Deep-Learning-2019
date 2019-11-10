@@ -112,9 +112,9 @@ def main(args):
         args.dataset_root, train=False, download=False, transform=transform
     )
 
-    transforms_list.insert(0, torchvision.transforms.RandomHorizontalFlip()) if args.data_aug_hflip else None
-    transforms_list.insert(0, torchvision.transforms.ColorJitter(brightness=args.data_aug_brightness))
-    transforms_list.insert(0, torchvision.transforms.RandomRotation(degrees=args.data_aug_rotation))
+    # transforms_list.insert(0, torchvision.transforms.RandomHorizontalFlip()) if args.data_aug_hflip else None
+    # transforms_list.insert(0, torchvision.transforms.ColorJitter(brightness=args.data_aug_brightness))
+    # transforms_list.insert(0, torchvision.transforms.RandomRotation(degrees=args.data_aug_rotation))
 
     transform = torchvision.transforms.Compose(transforms_list)
     train_dataset = torchvision.datasets.CIFAR10(
