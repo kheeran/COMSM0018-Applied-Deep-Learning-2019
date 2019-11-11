@@ -112,9 +112,9 @@ def main(args):
         args.dataset_root, train=False, download=False, transform=transform
     )
 
-    # transforms_list.insert(0, torchvision.transforms.RandomHorizontalFlip()) if args.data_aug_hflip else None
-    # transforms_list.insert(0, torchvision.transforms.ColorJitter(brightness=args.data_aug_brightness))
-    # transforms_list.insert(0, torchvision.transforms.RandomRotation(degrees=args.data_aug_rotation))
+    transforms_list.insert(0, torchvision.transforms.RandomHorizontalFlip()) if args.data_aug_hflip else None
+    transforms_list.insert(0, torchvision.transforms.ColorJitter(brightness=args.data_aug_brightness))
+    transforms_list.insert(0, torchvision.transforms.RandomRotation(degrees=args.data_aug_rotation))
 
     transform = torchvision.transforms.Compose(transforms_list)
     train_dataset = torchvision.datasets.CIFAR10(
@@ -392,7 +392,7 @@ class Trainer:
                 {"test": average_loss},
                 self.step
         )
-        print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}, class_accuracy: {class_accuracy * 100:2.2f}")
+        print(f"validation loss: {average_loss:.5f}, accuracy: {accuracy * 100:2.2f}, class_accuracy: {class_accuracy}")
 
 
 def compute_accuracy(
@@ -409,8 +409,10 @@ def compute_accuracy(
 def compute_class_accuracy(labels: Union[torch.Tensor, np.ndarray], preds: Union[torch.Tensor, np.ndarray], class_count: int = 10) -> float:
     assert len(labels) == len(preds)
     class_accuracy = []
-    for class in range (0,class_count):
-        class_accuracy.append(float((labels == preds == class).sum()) / len(labels == class))
+    for class_label in range(0,class_count):
+        class_labels = np.where(labels == class_label, class_label, class_label)
+        # twos = 2*np.ones(class_labels.shape)
+        class_accuracy.append(float(np.logical_and((preds == class_labels),(labels == class_labels)).sum())*100 / np.array(labels == class_labels).sum())
     return class_accuracy
 
 
